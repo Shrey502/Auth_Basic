@@ -1,7 +1,4 @@
-// frontend/src/App.js
-
 import './App.css';
-// Import useState and useEffect
 import React, { useState, useEffect } from "react"; 
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
@@ -20,17 +17,27 @@ function App() {
     }
   }, []); // The empty array ensures this runs only once on mount
 
+  // This function will be passed down to both Login and Register
+  const handleLoginSuccess = () => {
+    setIsAuthenticated(true);
+  };
+
   return (
     <Router>
       <Routes>
-        {/* Pass the setIsAuthenticated function as a prop to Login */}
+        {/* Pass the handler function as a prop to Login */}
         <Route 
           path="/" 
-          element={<Login onLoginSuccess={() => setIsAuthenticated(true)} />} 
+          element={<Login onLoginSuccess={handleLoginSuccess} />} 
         />
-        <Route path="/register" element={<Register />} />
+        
+        {/* Pass the same handler function as a prop to Register */}
+        <Route 
+          path="/register" 
+          element={<Register onLoginSuccess={handleLoginSuccess} />} 
+        />
 
-        {/* This protected route will now work correctly */}
+        {/* This protected route will now work correctly from either flow */}
         <Route
           path="/portfolio"
           element={isAuthenticated ? <Portfolio /> : <Navigate to="/" />}
@@ -38,7 +45,6 @@ function App() {
         
         {/* Redirect authenticated users away from the login page */}
         {isAuthenticated && <Route path="/login" element={<Navigate to="/portfolio" />} />}
-        
       </Routes>
     </Router>
   );

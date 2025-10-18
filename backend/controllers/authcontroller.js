@@ -57,7 +57,7 @@ exports.register = async (req, res) => {
   }
 };
 
-// --- REGISTRATION: Step 2 - Verify registration OTP ---
+// --- REGISTRATION: Step 2 - Verify OTP and automatically log user in ---
 exports.verifyOtp = async (req, res) => {
   try {
     const { email, otp } = req.body;
@@ -73,8 +73,16 @@ exports.verifyOtp = async (req, res) => {
     user.otp = undefined;
     user.otpExpires = undefined;
     await user.save();
+    
+    // Create and send a JWT token immediately for automatic login
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
 
-    res.status(200).json({ msg: "Email verified successfully! You can now log in." });
+    res.status(200).json({
+      msg: "Email verified successfully! You are now logged in.",
+      token,
+      user: { id: user._id, name: user.name, email: user.email },
+    });
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ msg: "Server error" });
@@ -111,11 +119,9 @@ exports.sendLoginOtp = async (req, res) => {
     }
 };
   
-
 // --- LOGIN: Step 2 - Verify credentials and OTP, then issue token ---
 exports.login = async (req, res) => {
     try {
-      // Now expects email, password, and OTP all together
       const { email, password, otp } = req.body;
       const user = await User.findOne({ email });
   
@@ -124,17 +130,14 @@ exports.login = async (req, res) => {
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) return res.status(400).json({ msg: "Invalid credentials." });
   
-      // Verify the OTP
       if (user.otp !== otp || user.otpExpires < Date.now()) {
           return res.status(400).json({ msg: "Invalid or expired OTP." });
       }
   
-      // All checks passed, so clear OTP fields
       user.otp = undefined;
       user.otpExpires = undefined;
       await user.save();
   
-      // Create and send the JWT token for the session
       const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
   
       res.status(200).json({
@@ -148,3 +151,4 @@ exports.login = async (req, res) => {
       res.status(500).json({ msg: "Server error" });
     }
 };
+
