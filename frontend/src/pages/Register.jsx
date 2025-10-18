@@ -1,3 +1,4 @@
+// frontend/src/pages/Register.jsx
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -7,59 +8,74 @@ function Register() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [isOtpSent, setIsOtpSent] = useState(false); // <-- New state to control UI
   const navigate = useNavigate();
 
   const handleRegister = async (e) => {
     e.preventDefault();
     try {
-      // Attempt to register the new user
       await axios.post("http://localhost:5000/api/auth/register", {
         name,
         email,
         password,
       });
-
-      // If successful, show a success message and redirect to login
-      alert("Registered successfully! Please log in.");
-      navigate("/login");
-
+      setIsOtpSent(true); // <-- Show OTP field on success
+      alert("OTP sent to your email! Please check and verify.");
     } catch (err) {
-      // THE NEW LOGIC - Check for the specific error message from the backend
-      if (err.response && err.response.data.msg === "User already exists") {
-        
-        // If the user exists, show the specific alert and redirect
-        alert("User already exists. Redirecting to login page.");
-        navigate("/");
+      alert(err.response?.data?.msg || "Registration failed.");
+    }
+  };
 
-      } else {
-        // For any other error, show a generic message
-        alert(err.response?.data?.msg || "Registration failed. Please try again.");
-      }
-    } finally {
-      setLoading(false);
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.post("http://localhost:5000/api/auth/verify-otp", {
+        email,
+        otp,
+      });
+      alert("Registration successful! Please log in.");
+      navigate("/");
+    } catch (err) {
+      alert(err.response?.data?.msg || "OTP verification failed.");
     }
   };
 
   return (
-    <div className="container mt-5">
-      <h2 className="text-center mb-4">Register</h2>
-      <form onSubmit={handleRegister}>
-        <div className="mb-3">
-          <label>Name:</label>
-          <input type="text" className="form-control" onChange={(e) => setName(e.target.value)} />
-        </div>
-        <div className="mb-3">
-          <label>Email:</label>
-          <input type="email" className="form-control" onChange={(e) => setEmail(e.target.value)} />
-        </div>
-        <div className="mb-3">
-          <label>Password:</label>
-          <input type="password" className="form-control" onChange={(e) => setPassword(e.target.value)} />
-        </div>
-        <button type="submit" className="btn btn-success">Register</button>
-      </form>
-      <p className="text-center mt-3">Already have an account? <a href="/">Login</a></p>
+    <div className="container mt-5" style={{ maxWidth: "400px" }}>
+      {!isOtpSent ? (
+        <>
+          <h2 className="text-center mb-4">Register</h2>
+          <form onSubmit={handleRegister}>
+            {/* Name, Email, Password fields... */}
+            <div className="mb-3">
+              <label>Name:</label>
+              <input type="text" className="form-control" onChange={(e) => setName(e.target.value)} required />
+            </div>
+            <div className="mb-3">
+              <label>Email:</label>
+              <input type="email" className="form-control" onChange={(e) => setEmail(e.target.value)} required />
+            </div>
+            <div className="mb-3">
+              <label>Password:</label>
+              <input type="password" className="form-control" onChange={(e) => setPassword(e.target.value)} required />
+            </div>
+            <button type="submit" className="btn btn-success w-100">Register</button>
+          </form>
+          <p className="text-center mt-3">Already have an account? <a href="/">Login</a></p>
+        </>
+      ) : (
+        <>
+          <h2 className="text-center mb-4">Verify OTP</h2>
+          <form onSubmit={handleVerifyOtp}>
+            <div className="mb-3">
+              <label>OTP:</label>
+              <input type="text" className="form-control" placeholder="Enter the 6-digit OTP" onChange={(e) => setOtp(e.target.value)} required />
+            </div>
+            <button type="submit" className="btn btn-primary w-100">Verify</button>
+          </form>
+        </>
+      )}
     </div>
   );
 }

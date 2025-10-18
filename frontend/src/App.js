@@ -1,33 +1,43 @@
+// frontend/src/App.js
+
 import './App.css';
+// Import useState and useEffect
+import React, { useState, useEffect } from "react"; 
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Portfolio from "./pages/Portfolio";
-// import Setup from "./pages/Setup";
 
 function App() {
-  const isAuthenticated = localStorage.getItem("token");
+  // Manage authentication status with state
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // Check for token in localStorage when the app loads
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      setIsAuthenticated(true);
+    }
+  }, []); // The empty array ensures this runs only once on mount
 
   return (
     <Router>
       <Routes>
-        {/* Default route → Register */}
-        <Route path="/" element={<Login />} />
-
-        {/* Login route */}
+        {/* Pass the setIsAuthenticated function as a prop to Login */}
+        <Route 
+          path="/" 
+          element={<Login onLoginSuccess={() => setIsAuthenticated(true)} />} 
+        />
         <Route path="/register" element={<Register />} />
 
-        Portfolio route (Protected)
+        {/* This protected route will now work correctly */}
         <Route
           path="/portfolio"
-          element={isAuthenticated ? <Portfolio /> : <Navigate to="/login" />}
+          element={isAuthenticated ? <Portfolio /> : <Navigate to="/" />}
         />
-
-        {/* Setup route (Protected) - THIS WAS MISSING */}
-        {/* <Route
-          path="/setup"
-          element={isAuthenticated ? <Setup /> : <Navigate to="/login" />}
-        /> */}
+        
+        {/* Redirect authenticated users away from the login page */}
+        {isAuthenticated && <Route path="/login" element={<Navigate to="/portfolio" />} />}
         
       </Routes>
     </Router>
