@@ -1,11 +1,13 @@
 // backend/routes/authRoutes.js
 const express = require("express");
 const router = express.Router();
-const { register, verifyOtp, login, verifyLogin } = require("../controllers/authcontroller");
+// Update the imported functions
+const { register, verifyOtp, login, sendLoginOtp } = require("../controllers/authcontroller");
 
 router.post("/register", register);
-router.post("/verify-otp", verifyOtp); // <-- New route for email verification
-router.post("/login", login);
-router.post("/verify-login", verifyLogin); // <-- New route for login verification
+router.post("/verify-otp", verifyOtp);
+router.post("/send-login-otp", sendLoginOtp); // <-- New route
+router.post("/login", login); // <-- This now handles the final verification
 
+// The '/verify-login' route is no longer needed.
 module.exports = router;
